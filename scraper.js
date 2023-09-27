@@ -27,10 +27,15 @@ const scrapeInfiniteScrollItems = async (page, itemTargetCount) => {
   });
   const page = await browser.newPage();
 
+  const scrollAll = false;
+
+  const xhrRequest = [];
 
   await page.goto(url);
 
-  // Use page.$$ para encontrar todos os botões na página
+  await page.setRequestInterception(true);
+
+  //navega até a aba de mais avaliações
   const buttons = await page.$$('button');
   //Encontra o mais avaliações e clica nele
   if (buttons.length > 0) {
@@ -51,8 +56,8 @@ const scrapeInfiniteScrollItems = async (page, itemTargetCount) => {
     console.log('Nenhum botão encontrado na página.');
   }
 
+  //Navega até a seção dos comentários
   const divSelector = 'div[aria-label="Nema Padaria - Visconde de Pirajá"][role="main"]';
-  //Use page.$ para encontrar a div específica
   const divElement = await page.$(divSelector);
   if(divElement){
     console.log('div para scroll encontrada');
@@ -62,18 +67,38 @@ const scrapeInfiniteScrollItems = async (page, itemTargetCount) => {
     const divFilhaElement = await divElement.$(divFilhaSelector);
 
     if (divFilhaElement) {
-      // Faça algo com a div filha encontrada
       console.log('Div filha encontrada');
       await new Promise(r => setTimeout(r, 2000));
 
-      // Por exemplo, você pode pegar o conteúdo da div filha
-      for (let i = 0; i < 2; i++) {
-        await page.evaluate(element => element.scrollTop = element.scrollHeight, divFilhaElement);
-        // Aguarde um pequeno intervalo entre as rolagens (opcional)
-        await new Promise(resolve => setTimeout(resolve, 1000));
+      let previousHeight = 0;
+      let currentHeight = await page.evaluate(element => element.scrollTop = element.scrollHeight, divFilhaElement);
+
+      if(scrollAll){
+        while (previousHeight !== currentHeight) {
+          previousHeight = currentHeight;
+          await page.evaluate(element => element.scrollTop = element.scrollHeight, divFilhaElement);
+
+          await new Promise(resolve => setTimeout(resolve, 1000));
+
+          currentHeight = await page.evaluate(element => element.scrollTop = element.scrollHeight, divFilhaElement);
+        }
+      } else{
+        for (let i = 0; i < 4; i++) {
+            const height = await page.evaluate(element => element.scrollTop = element.scrollHeight, divFilhaElement);
+            console.log(height)
+            // Aguarde um pequeno intervalo entre as rolagens (opcional)
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
       }
-      //const divFilhaConteudo = await page.evaluate(element => element.scrollTop = element.scrollHeight, divFilhaElement);
-      // console.log('Conteúdo da div filha:', divFilhaConteudo);
+
+
+      // // Por exemplo, você pode pegar o conteúdo da div filha
+      // for (let i = 0; i < 2; i++) {
+      //   const height = await page.evaluate(element => element.scrollTop = element.scrollHeight, divFilhaElement);
+      //    console.log(height)
+      //   // Aguarde um pequeno intervalo entre as rolagens (opcional)
+      //   await new Promise(resolve => setTimeout(resolve, 1000));
+      // }
     } else {
       console.log('Div filha com tabindex igual a -1 não encontrada dentro da div pai.');
     }
