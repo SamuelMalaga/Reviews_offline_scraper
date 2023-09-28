@@ -30,6 +30,7 @@ function parseAndFormatXhrResponses(XhrArray){
       const JsonFormattedArray = JSON.stringify(reviewDataArray);
       // Escreva os dados em um arquivo JSON localmente
       fs.writeFileSync('browserParsedResponses.json', JsonFormattedArray, 'utf-8');
+      console.log(reviewDataArray.length, " Reviews coletadas")
       console.log('Dados parseados em browserParsedResponses.json');
 
   });
@@ -54,8 +55,8 @@ async function findAndClickOnMoreReviewButton(ButtonsList){
     console.log('Nenhum botão encontrado na página.');
   }
 }
-async function findMainReviewSection(page, divPaiSelector) {
-  const divElement = await page.$(divPaiSelector);
+async function findMainReviewSection(page, mainDivSelector) {
+  const divElement = await page.$(mainDivSelector);
 
   if (divElement) {
     console.log('Div pai encontrada');
@@ -65,26 +66,26 @@ async function findMainReviewSection(page, divPaiSelector) {
     return null;
   }
 }
-async function findInnerReviewSectionAndScroll(page, divFilhaElement, scrollAll = false) {
-  if (divFilhaElement) {
+async function findInnerReviewSectionAndScroll(page, innerDivElement, scrollAll = true) {
+  if (innerDivElement) {
     console.log('Fazendo scroll na div filha');
     await new Promise(r => setTimeout(r, 2000));
 
     let previousHeight = 0;
-    let currentHeight = await page.evaluate(element => element.scrollTop = element.scrollHeight, divFilhaElement);
+    let currentHeight = await page.evaluate(element => element.scrollTop = element.scrollHeight, innerDivElement);
 
     if (scrollAll) {
       while (previousHeight !== currentHeight) {
         previousHeight = currentHeight;
-        await page.evaluate(element => element.scrollTop = element.scrollHeight, divFilhaElement);
+        await page.evaluate(element => element.scrollTop = element.scrollHeight, innerDivElement);
 
         await new Promise(resolve => setTimeout(resolve, 1000));
 
-        currentHeight = await page.evaluate(element => element.scrollTop = element.scrollHeight, divFilhaElement);
+        currentHeight = await page.evaluate(element => element.scrollTop = element.scrollHeight, innerDivElement);
       }
     } else {
       for (let i = 0; i < 6; i++) {
-        await page.evaluate(element => element.scrollTop = element.scrollHeight, divFilhaElement);
+        await page.evaluate(element => element.scrollTop = element.scrollHeight, innerDivElement);
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
     }
@@ -92,14 +93,26 @@ async function findInnerReviewSectionAndScroll(page, divFilhaElement, scrollAll 
     console.log('Div filha com tabindex igual a -1 não encontrada dentro da div pai.');
   }
 }
+function getTimeStamp(){
+  const currentDate = new Date();
+  const hours = currentDate.getHours();
+  const minutes = currentDate.getMinutes();
+  const seconds = currentDate.getSeconds();
+
+  return currentDate
+}
 
 (async () =>{
   const browser = await pup.launch({
-    headless: true
+    headless:false
   });
   const page = await browser.newPage();
 
-  const scrollAll = false;
+  //const scrollAll = false;
+
+  const startTimeStamp = getTimeStamp();
+
+  console.log(`Scraping iniciado em: ${startTimeStamp.getHours()}:${startTimeStamp.getMinutes()}:${startTimeStamp.getSeconds()}`)
 
   const xhrRequests = [];
 
@@ -141,24 +154,25 @@ async function findInnerReviewSectionAndScroll(page, divFilhaElement, scrollAll 
 
   await findAndClickOnMoreReviewButton(buttonsList);
 
-  const divPaiSelector = 'div[aria-label="Nema Padaria - Visconde de Pirajá"][role="main"]';
-  const divPaiElement = await findMainReviewSection(page, divPaiSelector);
+  const mainDivSelector = 'div[aria-label="Nema Padaria - Visconde de Pirajá"][role="main"]';
+  const mainDivElement = await findMainReviewSection(page, mainDivSelector);
 
-  const divFilhaSelector = 'div[tabindex="-1"]';
-  const divFilhaElement = divPaiElement ? await divPaiElement.$(divFilhaSelector) : null;
+  const innerDivSelector = 'div[tabindex="-1"]';
+  const innerDivElement = mainDivElement ? await mainDivElement.$(innerDivSelector) : null;
 
-  await findInnerReviewSectionAndScroll(page, divFilhaElement);
+  await findInnerReviewSectionAndScroll(page, innerDivElement);
   // Feche o navegador quando terminar
   await browser.close();
 
-  //Seção para salvar os dados de resposta em um json e estudar como fazer o parse
-  // // Escreva os dados em um arquivo JSON localmente
-  // const jsonData = JSON.stringify(xhrResponses, null, 2); // Formate com 2 espaços de indentação
-  // fs.writeFileSync('xhr_responses.json', jsonData, 'utf-8');
-
-  // console.log('Dados das respostas XHR foram escritos em xhr_responses.json');
   parseAndFormatXhrResponses(xhrResponses);
-  console.log('Scraping concluído')
+
+  const endTimeStamp = getTimeStamp();
+
+  console.log(`Scraping finalizado em: ${endTimeStamp.getHours()}:${endTimeStamp.getMinutes()}:${endTimeStamp.getSeconds()}`);
+
+  const scrapeTimeDiffInMinutes = Math.floor((endTimeStamp - startTimeStamp)/6000);
+
+  console.log(`Scraping concluído em ${scrapeTimeDiffInMinutes} minutos`);
 
 })();
 

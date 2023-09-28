@@ -131,7 +131,4 @@ dist
 
 
 #testFiles
-browserParsedResponses.json
-parsedResponses.json
-xhr_responses_parser_test.js
-xhr_responses.json
+test*.*
