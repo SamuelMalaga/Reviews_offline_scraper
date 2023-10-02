@@ -146,7 +146,6 @@ async function inserReviewDataInDb(ReviewDataArray){
   console.log(`Total inseridos: ${totalInseridos}`);
   console.log(`Total ignorados: ${totalIgnorados}`);
 }
-
 (async () =>{
   const browser = await pup.launch({
     headless:true
@@ -220,7 +219,7 @@ async function inserReviewDataInDb(ReviewDataArray){
         if (correspondencia && correspondencia.length > 1) {
           const numero = parseInt(correspondencia[1], 10);
           scrollN = Math.ceil(numero / 10);
-          //console.log("Resultado:", scrollN);
+
         } else {
           console.log("Nenhuma correspondência encontrada.");
         }
