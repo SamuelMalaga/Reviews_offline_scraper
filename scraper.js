@@ -134,8 +134,7 @@ async function inserReviewDataInDb(ReviewDataArray){
       data.reviewRating,
       data.reviewLang
     ]);
-    //console.log(result[0]['insert_review_data_2'].status)
-    // Atualize os totais com base no status
+
     if (result[0]['insert_review_data_2'].status === 'inserted') {
       totalInseridos++;
     } else if (result[0]['insert_review_data_2'].status === 'ignored') {
@@ -150,7 +149,7 @@ async function inserReviewDataInDb(ReviewDataArray){
 
 (async () =>{
   const browser = await pup.launch({
-    headless:false
+    headless:true
   });
   const page = await browser.newPage();
 
@@ -221,7 +220,7 @@ async function inserReviewDataInDb(ReviewDataArray){
         if (correspondencia && correspondencia.length > 1) {
           const numero = parseInt(correspondencia[1], 10);
           scrollN = Math.ceil(numero / 10);
-          console.log("Resultado:", scrollN);
+          //console.log("Resultado:", scrollN);
         } else {
           console.log("Nenhuma correspondência encontrada.");
         }
@@ -242,7 +241,7 @@ async function inserReviewDataInDb(ReviewDataArray){
   const innerDivElement = mainDivElement ? await mainDivElement.$(innerDivSelector) : null;
 
   await findInnerReviewSectionAndScroll(page, innerDivElement, scrollN);
-  // Feche o navegador quando terminar
+
   await browser.close();
 
   const scrapedData = parseAndFormatXhrResponses(xhrResponses);
